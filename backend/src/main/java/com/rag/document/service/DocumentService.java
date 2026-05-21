@@ -3,6 +3,7 @@ package com.rag.document.service;
 import com.rag.document.chunk.FixedLengthChunker;
 import com.rag.document.entity.ChunkEntity;
 import com.rag.document.entity.DocumentEntity;
+import com.rag.document.model.DocumentStatus;
 import com.rag.document.parser.DocumentTextParser;
 import com.rag.document.repository.ChunkRepository;
 import com.rag.document.repository.DocumentRepository;
@@ -94,10 +95,30 @@ public class DocumentService {
 
     @Transactional
     public void delete(String id) {
-        DocumentEntity document = get(id);
-        chunkRepository.deleteByDocId(id);
-        storageService.delete(document.getFilePath());
-        documentRepository.deleteById(id);
+        DocumentEntity document = documentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("文档不存在：" + id));
+        
+        if (document.getStatus() == DocumentStatus.DELETING) {
+            throw new IllegalStateException("文档正在删除中，请勿重复操作");
+        }
+        
+        document.markDeleting();
+        documentRepository.save(document);
+        
+        try {
+            milvusService.deleteByDocId(id);
+            
+            if (document.getFilePath() != null && !document.getFilePath().isEmpty()) {
+                storageService.delete(document.getFilePath());
+            }
+            
+            chunkRepository.deleteByDocId(id);
+            documentRepository.delete(document);
+        } catch (Exception e) {
+            document.markDeleteFailed("删除失败：" + e.getMessage());
+            documentRepository.save(document);
+            throw new IllegalStateException("删除失败：" + e.getMessage());
+        }
     }
 
     private List<ChunkEntity> toChunks(String docId, List<String> chunkTexts) {

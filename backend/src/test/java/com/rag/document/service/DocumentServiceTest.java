@@ -1,6 +1,7 @@
 package com.rag.document.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -56,5 +57,63 @@ class DocumentServiceTest {
         assertThat(chunks.getValue())
                 .extracting(ChunkEntity::getContent)
                 .containsExactly("hello", " worl", "d");
+    }
+
+    @Test
+    void deleteThrowsForNonexistentDocument() {
+        DocumentRepository documentRepository = org.mockito.Mockito.mock(DocumentRepository.class);
+        ChunkRepository chunkRepository = org.mockito.Mockito.mock(ChunkRepository.class);
+        StorageService storageService = org.mockito.Mockito.mock(StorageService.class);
+        DocumentTextParser parser = org.mockito.Mockito.mock(DocumentTextParser.class);
+        EmbeddingService embeddingService = org.mockito.Mockito.mock(EmbeddingService.class);
+        MilvusService milvusService = org.mockito.Mockito.mock(MilvusService.class);
+        FixedLengthChunker chunker = new FixedLengthChunker(5, 0);
+        DocumentService service = new DocumentService(documentRepository, chunkRepository, storageService, parser, chunker, embeddingService, milvusService);
+        
+        when(documentRepository.findById("nonexistent")).thenReturn(java.util.Optional.empty());
+        
+        assertThrows(IllegalArgumentException.class, () -> service.delete("nonexistent"));
+    }
+
+    @Test
+    void deleteThrowsForDeletingStatusDocument() {
+        DocumentRepository documentRepository = org.mockito.Mockito.mock(DocumentRepository.class);
+        ChunkRepository chunkRepository = org.mockito.Mockito.mock(ChunkRepository.class);
+        StorageService storageService = org.mockito.Mockito.mock(StorageService.class);
+        DocumentTextParser parser = org.mockito.Mockito.mock(DocumentTextParser.class);
+        EmbeddingService embeddingService = org.mockito.Mockito.mock(EmbeddingService.class);
+        MilvusService milvusService = org.mockito.Mockito.mock(MilvusService.class);
+        FixedLengthChunker chunker = new FixedLengthChunker(5, 0);
+        DocumentService service = new DocumentService(documentRepository, chunkRepository, storageService, parser, chunker, embeddingService, milvusService);
+        
+        DocumentEntity document = new DocumentEntity("test.txt", "TXT", 100);
+        document.markDeleting();
+        when(documentRepository.findById("doc-1")).thenReturn(java.util.Optional.of(document));
+        
+        assertThrows(IllegalStateException.class, () -> service.delete("doc-1"));
+    }
+
+    @Test
+    void deleteMarksDeleteFailedOnMilvusError() {
+        DocumentRepository documentRepository = org.mockito.Mockito.mock(DocumentRepository.class);
+        ChunkRepository chunkRepository = org.mockito.Mockito.mock(ChunkRepository.class);
+        StorageService storageService = org.mockito.Mockito.mock(StorageService.class);
+        DocumentTextParser parser = org.mockito.Mockito.mock(DocumentTextParser.class);
+        EmbeddingService embeddingService = org.mockito.Mockito.mock(EmbeddingService.class);
+        MilvusService milvusService = org.mockito.Mockito.mock(MilvusService.class);
+        FixedLengthChunker chunker = new FixedLengthChunker(5, 0);
+        DocumentService service = new DocumentService(documentRepository, chunkRepository, storageService, parser, chunker, embeddingService, milvusService);
+        
+        DocumentEntity document = new DocumentEntity("test.txt", "TXT", 100);
+        document.markStored("documents/test.txt");
+        when(documentRepository.findById("doc-1")).thenReturn(java.util.Optional.of(document));
+        when(documentRepository.save(any(DocumentEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        org.mockito.Mockito.doThrow(new RuntimeException("Milvus error")).when(milvusService).deleteByDocId("doc-1");
+        
+        assertThrows(IllegalStateException.class, () -> service.delete("doc-1"));
+        
+        ArgumentCaptor<DocumentEntity> captor = ArgumentCaptor.forClass(DocumentEntity.class);
+        verify(documentRepository, org.mockito.Mockito.times(2)).save(captor.capture());
+        assertThat(captor.getAllValues().get(1).getStatus()).isEqualTo(DocumentStatus.DELETE_FAILED);
     }
 }

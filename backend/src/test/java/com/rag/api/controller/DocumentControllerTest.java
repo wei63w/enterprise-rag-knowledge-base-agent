@@ -79,4 +79,24 @@ class DocumentControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("不支持的文件格式：EXE"));
     }
+
+    @Test
+    void returnsInternalServerErrorWhenDeleteFails() throws Exception {
+        org.mockito.Mockito.doThrow(new IllegalStateException("删除失败：Milvus 连接异常"))
+                .when(documentService).delete("doc-1");
+        
+        mockMvc.perform(delete("/api/documents/doc-1"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.message").value("删除失败：Milvus 连接异常"));
+    }
+
+    @Test
+    void returnsBadRequestWhenDeletingNonexistentDocument() throws Exception {
+        org.mockito.Mockito.doThrow(new IllegalArgumentException("文档不存在：nonexistent"))
+                .when(documentService).delete("nonexistent");
+        
+        mockMvc.perform(delete("/api/documents/nonexistent"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("文档不存在：nonexistent"));
+    }
 }
