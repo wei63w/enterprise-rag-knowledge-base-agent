@@ -24,7 +24,8 @@ export async function sendChat(request: ChatRequest): Promise<ChatResponse> {
   });
  
   if (!response.ok) {
-    throw new Error(`Chat request failed: ${response.status}`);
+    const errorBody = await response.json().catch(() => ({})) as { message?: string };
+    throw new Error(errorBody.message || `对话请求失败：${response.status}`);
   }
  
   return response.json();

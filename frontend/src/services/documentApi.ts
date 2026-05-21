@@ -13,8 +13,16 @@ export type DocumentRecord = {
 
 async function parseResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `请求失败：${response.status}`);
+    let message = `请求失败：${response.status}`;
+    try {
+      const errorBody = await response.json();
+      if (errorBody.message) {
+        message = errorBody.message;
+      }
+    } catch {
+      // JSON 解析失败，使用默认消息
+    }
+    throw new Error(message);
   }
   return response.json() as Promise<T>;
 }
