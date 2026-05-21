@@ -8,6 +8,8 @@ import com.rag.document.repository.ChunkRepository;
 import com.rag.document.repository.DocumentRepository;
 import com.rag.document.storage.StorageService;
 import com.rag.document.storage.StorageService.StoredObject;
+import com.rag.embedding.EmbeddingService;
+import com.rag.vector.MilvusService;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
@@ -25,18 +27,24 @@ public class DocumentService {
     private final StorageService storageService;
     private final DocumentTextParser parser;
     private final FixedLengthChunker chunker;
+    private final EmbeddingService embeddingService;
+    private final MilvusService milvusService;
 
     public DocumentService(
             DocumentRepository documentRepository,
             ChunkRepository chunkRepository,
             StorageService storageService,
             DocumentTextParser parser,
-            FixedLengthChunker chunker) {
+            FixedLengthChunker chunker,
+            EmbeddingService embeddingService,
+            MilvusService milvusService) {
         this.documentRepository = documentRepository;
         this.chunkRepository = chunkRepository;
         this.storageService = storageService;
         this.parser = parser;
         this.chunker = chunker;
+        this.embeddingService = embeddingService;
+        this.milvusService = milvusService;
     }
 
     @Transactional
@@ -60,7 +68,12 @@ public class DocumentService {
             List<ChunkEntity> chunks = toChunks(document.getId(), chunkTexts);
             chunkRepository.saveAll(chunks);
             document.markReady(chunks.size());
-            return documentRepository.save(document);
+            documentRepository.save(document);
+            List<String> chunkIds = chunks.stream().map(ChunkEntity::getId).toList();
+            List<String> contents = chunks.stream().map(ChunkEntity::getContent).toList();
+            List<float[]> embeddings = embeddingService.embed(contents);
+            milvusService.insert(chunkIds, contents, embeddings);
+            return document;
         } catch (IOException e) {
             document.markError("文件读取失败");
             return documentRepository.save(document);

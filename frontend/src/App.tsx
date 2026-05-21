@@ -11,6 +11,7 @@ import {
   Badge,
   Button,
   ConfigProvider,
+  Input,
   Layout,
   Menu,
   Space,
@@ -23,6 +24,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { deleteDocument, listDocuments, uploadDocument, type DocumentRecord } from "./services/documentApi";
+import { sendChat, type SourceReference } from "./services/chatApi";
 import "./styles.css";
 
 const { Header, Content, Sider } = Layout;
@@ -145,20 +147,73 @@ function DocumentsPage() {
 }
 
 function ChatPage() {
+  const [messages, setMessages] = useState<Array<{ role: "user" | "assistant"; content: string; sources?: SourceReference[] }>>([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSend() {
+    if (!input.trim()) return;
+
+    const question = input.trim();
+    setInput("");
+    setMessages(prev => [...prev, { role: "user", content: question }]);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await sendChat({ question });
+      setMessages(prev => [...prev, { role: "assistant", content: response.answer, sources: response.sources }]);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "问答请求失败");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <section className="workspace-panel" aria-labelledby="chat-title">
       <div className="panel-heading">
         <div>
-          <Title id="chat-title" level={2}>
-            对话
-          </Title>
+          <Title id="chat-title" level={2}>对话</Title>
           <Text type="secondary">RAG 问答工作区</Text>
         </div>
         <Tag color="blue">基础问答</Tag>
       </div>
+      {error ? <Alert className="panel-alert" message={error} showIcon type="error" /> : null}
       <div className="chat-surface">
-        <div className="message message-user">公司的报销流程是什么？</div>
-        <div className="message message-assistant">上传文档并完成索引后，这里会展示带引用来源的答案。</div>
+        {messages.length === 0 ? (
+          <div className="chat-placeholder">输入问题开始问答</div>
+        ) : (
+          messages.map((msg, idx) => (
+            <div key={idx} className={`message message-${msg.role}`}>
+              <div className="message-content">{msg.content}</div>
+              {msg.sources && msg.sources.length > 0 ? (
+                <div className="message-sources">
+                  <Text type="secondary">来源引用：</Text>
+                  {msg.sources.map((s, i) => (
+                    <div key={i} className="source-item">
+                      <Text ellipsis>{s.content}</Text>
+                      <Tag>相关性: {s.score.toFixed(2)}</Tag>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ))
+        )}
+      </div>
+      <div className="chat-input-area">
+        <Input.TextArea
+          placeholder="输入问题..."
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onPressEnter={e => { if (!e.shiftKey) { e.preventDefault(); void handleSend(); } }}
+          rows={2}
+        />
+        <Button type="primary" loading={loading} onClick={() => void handleSend()}>
+          发送
+        </Button>
       </div>
     </section>
   );
@@ -229,7 +284,7 @@ function App() {
         <Layout>
           <Header className="app-header">
             <Title level={1}>Enterprise RAG Knowledge Base Agent</Title>
-            <Text type="secondary">Phase 2 Document Processing</Text>
+            <Text type="secondary">Phase 3 Vector Index &amp; Chat</Text>
           </Header>
           <Content className="app-content">{content}</Content>
         </Layout>
