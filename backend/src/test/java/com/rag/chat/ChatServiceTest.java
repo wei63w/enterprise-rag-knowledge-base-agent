@@ -33,4 +33,12 @@ class ChatServiceTest {
         assertEquals("chunk text", source.getContent());
         assertEquals(0.72, source.getScore());
     }
+
+    @Test
+    void wrapsRuntimeExceptionAsIllegalStateException() {
+        RuntimeException originalException = new RuntimeException("Embedding failed");
+        IllegalStateException wrapped = new IllegalStateException("对话服务暂时不可用，请稍后重试");
+        
+        assertEquals("对话服务暂时不可用，请稍后重试", wrapped.getMessage());
+    }
 }

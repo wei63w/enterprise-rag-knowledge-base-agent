@@ -53,44 +53,48 @@ public class ChatService {
     }
 
     public ChatResult chat(String question) {
-        float[] queryVector = embeddingService.embed(question);
-        List<EmbeddingMatch<TextSegment>> matches = milvusService.search(
-                queryVector, ragProperties.getRetrieval().getVectorTopK());
+        try {
+            float[] queryVector = embeddingService.embed(question);
+            List<EmbeddingMatch<TextSegment>> matches = milvusService.search(
+                    queryVector, ragProperties.getRetrieval().getVectorTopK());
 
-        List<EmbeddingMatch<TextSegment>> relevantMatches = matches.stream()
-                .filter(m -> m.score() >= MIN_SCORE_THRESHOLD)
-                .collect(Collectors.toList());
+            List<EmbeddingMatch<TextSegment>> relevantMatches = matches.stream()
+                    .filter(m -> m.score() >= MIN_SCORE_THRESHOLD)
+                    .collect(Collectors.toList());
 
-        if (relevantMatches.isEmpty()) {
-            ChatHistoryEntity history = new ChatHistoryEntity(question, NO_CONTEXT_ANSWER, "deepseek-chat");
+            if (relevantMatches.isEmpty()) {
+                ChatHistoryEntity history = new ChatHistoryEntity(question, NO_CONTEXT_ANSWER, "deepseek-chat");
+                chatHistoryRepository.save(history);
+                return new ChatResult(NO_CONTEXT_ANSWER, List.of());
+            }
+
+            String context = relevantMatches.stream()
+                    .map(m -> m.embedded().text())
+                    .collect(Collectors.joining("\n\n"));
+
+            String prompt = buildPrompt(context, question);
+            String answer = chatModel.generate(prompt);
+
+            List<SourceReference> sources = relevantMatches.stream()
+                    .map(m -> {
+                        String docId = m.embedded().metadata().get("docId");
+                        String docName = "";
+                        if (docId != null) {
+                            docName = documentRepository.findById(docId)
+                                    .map(DocumentEntity::getName)
+                                    .orElse("");
+                        }
+                        return new SourceReference(docId, docName, m.embedded().text(), m.score());
+                    })
+                    .collect(Collectors.toList());
+
+            ChatHistoryEntity history = new ChatHistoryEntity(question, answer, "deepseek-chat");
             chatHistoryRepository.save(history);
-            return new ChatResult(NO_CONTEXT_ANSWER, List.of());
+
+            return new ChatResult(answer, sources);
+        } catch (RuntimeException e) {
+            throw new IllegalStateException("对话服务暂时不可用，请稍后重试");
         }
-
-        String context = relevantMatches.stream()
-                .map(m -> m.embedded().text())
-                .collect(Collectors.joining("\n\n"));
-
-        String prompt = buildPrompt(context, question);
-        String answer = chatModel.generate(prompt);
-
-        List<SourceReference> sources = relevantMatches.stream()
-                .map(m -> {
-                    String docId = m.embedded().metadata().get("docId");
-                    String docName = "";
-                    if (docId != null) {
-                        docName = documentRepository.findById(docId)
-                                .map(DocumentEntity::getName)
-                                .orElse("");
-                    }
-                    return new SourceReference(docId, docName, m.embedded().text(), m.score());
-                })
-                .collect(Collectors.toList());
-
-        ChatHistoryEntity history = new ChatHistoryEntity(question, answer, "deepseek-chat");
-        chatHistoryRepository.save(history);
-
-        return new ChatResult(answer, sources);
     }
 
     private String buildPrompt(String context, String question) {
