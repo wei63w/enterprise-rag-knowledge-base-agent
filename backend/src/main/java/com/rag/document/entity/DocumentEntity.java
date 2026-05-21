@@ -70,6 +70,17 @@ public class DocumentEntity {
         this.processTime = Instant.now();
     }
 
+    public void markDeleting() {
+        this.status = DocumentStatus.DELETING;
+        this.processTime = Instant.now();
+    }
+
+    public void markDeleteFailed(String message) {
+        this.status = DocumentStatus.DELETE_FAILED;
+        this.errorMessage = message;
+        this.processTime = Instant.now();
+    }
+
     public String getId() {
         return id;
     }
