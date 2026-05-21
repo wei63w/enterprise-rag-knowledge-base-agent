@@ -49,6 +49,8 @@ cp .env.example .env
 docker compose --env-file .env -f docker/docker-compose.yml up -d
 ```
 
+如果本机 `3306` 已被占用，可以在 `.env` 中把 `MYSQL_PORT` 改为 `3307`，并同步调整 `SPRING_DATASOURCE_URL` 中的端口。
+
 启动后端：
 
 ```bash

@@ -13,6 +13,10 @@ body {
   min-height: 100vh;
 }
 
+.app-shell > .ant-layout {
+  min-width: 0;
+}
+
 .app-sider {
   background: #17212f !important;
   border-right: 1px solid #263244;
@@ -64,12 +68,15 @@ body {
   padding: 0 28px;
   background: #ffffff;
   border-bottom: 1px solid #dde4ee;
+  box-sizing: border-box;
 }
 
 .app-header h1.ant-typography {
   margin: 0;
   font-size: 22px;
   line-height: 1.2;
+  min-width: 0;
+  overflow-wrap: normal;
 }
 
 .app-content {
@@ -90,6 +97,10 @@ body {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 20px;
+}
+
+.panel-alert {
+  margin-bottom: 16px;
 }
 
 .panel-heading h2.ant-typography {
@@ -122,14 +133,23 @@ body {
 }
 
 @media (max-width: 760px) {
-  .app-shell {
-    display: block;
+  .app-shell.ant-layout-has-sider {
+    display: flex;
+    flex-direction: column !important;
+  }
+
+  .app-shell > .ant-layout {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0;
   }
 
   .app-sider {
+    flex: 0 0 auto !important;
     width: 100% !important;
     max-width: none !important;
     min-width: 0 !important;
+    height: auto;
   }
 
   .app-sider .ant-menu {
@@ -142,6 +162,12 @@ body {
     align-items: flex-start;
     flex-direction: column;
     padding: 18px;
+    width: 100%;
+  }
+
+  .app-header h1.ant-typography {
+    font-size: 18px;
+    word-break: keep-all;
   }
 
   .app-content {
@@ -150,5 +176,19 @@ body {
 
   .workspace-panel {
     padding: 18px;
+    overflow-x: auto;
+  }
+
+  .panel-heading {
+    flex-direction: column;
+  }
+
+  .panel-heading > .ant-space {
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .workspace-panel .ant-table {
+    min-width: 640px;
   }
 }
