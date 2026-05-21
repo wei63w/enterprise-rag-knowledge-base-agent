@@ -1,0 +1,154 @@
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: #eef2f6;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-sider {
+  background: #17212f !important;
+  border-right: 1px solid #263244;
+}
+
+.app-sider .ant-menu {
+  background: transparent;
+  color: #c5d0df;
+  border-inline-end: 0;
+  padding: 8px;
+}
+
+.app-sider .ant-menu-item {
+  border-radius: 6px;
+  height: 42px;
+  line-height: 42px;
+}
+
+.app-sider .ant-menu-item-selected {
+  background: #2364aa;
+  color: #ffffff;
+}
+
+.brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 64px;
+  padding: 0 20px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.brand-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #39c5bb;
+  box-shadow: 0 0 0 4px rgba(57, 197, 187, 0.16);
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 72px;
+  padding: 0 28px;
+  background: #ffffff;
+  border-bottom: 1px solid #dde4ee;
+}
+
+.app-header h1.ant-typography {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.app-content {
+  padding: 28px;
+}
+
+.workspace-panel {
+  max-width: 1120px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #dde4ee;
+  border-radius: 8px;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.panel-heading h2.ant-typography {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.chat-surface {
+  display: grid;
+  gap: 12px;
+  max-width: 720px;
+}
+
+.message {
+  padding: 12px 14px;
+  border-radius: 8px;
+  line-height: 1.6;
+}
+
+.message-user {
+  justify-self: end;
+  color: #ffffff;
+  background: #2364aa;
+}
+
+.message-assistant {
+  justify-self: start;
+  color: #17212f;
+  background: #eef2f6;
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    display: block;
+  }
+
+  .app-sider {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  .app-sider .ant-menu {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .app-header {
+    height: auto;
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .app-content {
+    padding: 18px;
+  }
+
+  .workspace-panel {
+    padding: 18px;
+  }
+}

@@ -1,2 +1,17 @@
 # Local editor/workspace metadata
 docs/.obsidian/
+
+# Build outputs
+backend/target/
+frontend/dist/
+frontend/node_modules/
+frontend/*.tsbuildinfo
+frontend/vite.config.d.ts
+frontend/vite.config.js
+
+# Local environment files
+.env
+*.local
+
+# Logs
+*.log
