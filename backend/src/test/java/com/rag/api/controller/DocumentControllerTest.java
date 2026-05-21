@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.rag.document.entity.DocumentEntity;
+import com.rag.document.repository.ChunkRepository;
 import com.rag.document.service.DocumentService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,15 @@ class DocumentControllerTest {
 
     @MockBean
     private DocumentService documentService;
+
+    @MockBean
+    private ChunkRepository chunkRepository;
+
+    @MockBean
+    private com.rag.document.repository.ChunkRepository chunkRepository;
+
+    @MockBean
+    private ChunkRepository chunkRepository;
 
     @Test
     void listsDocuments() throws Exception {

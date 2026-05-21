@@ -157,10 +157,22 @@ body {
   border-radius: 4px;
 }
 
-.source-item {
-  margin-top: 8px;
-  padding: 4px;
-}
+.source-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  
+  .source-content {
+    margin-top: 6px;
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid #dde4ee;
+    border-radius: 4px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
 
 @media (max-width: 760px) {
   .app-shell.ant-layout-has-sider {

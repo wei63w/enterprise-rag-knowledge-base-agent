@@ -69,10 +69,10 @@ public class DocumentService {
             chunkRepository.saveAll(chunks);
             document.markReady(chunks.size());
             documentRepository.save(document);
-            List<String> chunkIds = chunks.stream().map(ChunkEntity::getId).toList();
             List<String> contents = chunks.stream().map(ChunkEntity::getContent).toList();
+            List<String> docIds = chunks.stream().map(c -> c.getDocId()).toList();
             List<float[]> embeddings = embeddingService.embed(contents);
-            milvusService.insert(chunkIds, contents, embeddings);
+            milvusService.insert(docIds, contents, embeddings);
             return document;
         } catch (IOException e) {
             document.markError("文件读取失败");

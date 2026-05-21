@@ -193,8 +193,11 @@ function ChatPage() {
                   <Text type="secondary">来源引用：</Text>
                   {msg.sources.map((s, i) => (
                     <div key={i} className="source-item">
-                      <Text ellipsis>{s.content}</Text>
-                      <Tag>相关性: {s.score.toFixed(2)}</Tag>
+                      <div className="source-header">
+                        <Tag color="blue">{s.docName || s.docId}</Tag>
+                        <Tag>相关性: {s.score.toFixed(2)}</Tag>
+                      </div>
+                      <div className="source-content">{s.content}</div>
                     </div>
                   ))}
                 </div>
@@ -284,7 +287,7 @@ function App() {
         <Layout>
           <Header className="app-header">
             <Title level={1}>Enterprise RAG Knowledge Base Agent</Title>
-            <Text type="secondary">Phase 3 Vector Index &amp; Chat</Text>
+            <Text type="secondary">Phase 4 Source Tracing</Text>
           </Header>
           <Content className="app-content">{content}</Content>
         </Layout>

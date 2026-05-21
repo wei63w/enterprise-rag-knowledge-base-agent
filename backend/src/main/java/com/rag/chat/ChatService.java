@@ -3,6 +3,8 @@ package com.rag.chat;
 import com.rag.chat.entity.ChatHistoryEntity;
 import com.rag.chat.repository.ChatHistoryRepository;
 import com.rag.config.RagProperties;
+import com.rag.document.entity.DocumentEntity;
+import com.rag.document.repository.DocumentRepository;
 import com.rag.embedding.EmbeddingService;
 import com.rag.vector.MilvusService;
 import dev.langchain4j.data.segment.TextSegment;
@@ -23,6 +25,7 @@ public class ChatService {
     private final EmbeddingService embeddingService;
     private final MilvusService milvusService;
     private final ChatHistoryRepository chatHistoryRepository;
+    private final DocumentRepository documentRepository;
     private final ChatLanguageModel chatModel;
     private final RagProperties ragProperties;
 
@@ -30,6 +33,7 @@ public class ChatService {
             EmbeddingService embeddingService,
             MilvusService milvusService,
             ChatHistoryRepository chatHistoryRepository,
+            DocumentRepository documentRepository,
             @Value("${deepseek.api-key}") String apiKey,
             @Value("${deepseek.base-url}") String baseUrl,
             @Value("${chat.model}") String modelName,
@@ -38,6 +42,7 @@ public class ChatService {
         this.embeddingService = embeddingService;
         this.milvusService = milvusService;
         this.chatHistoryRepository = chatHistoryRepository;
+        this.documentRepository = documentRepository;
         this.ragProperties = ragProperties;
         this.chatModel = OpenAiChatModel.builder()
                 .apiKey(apiKey)
@@ -70,7 +75,16 @@ public class ChatService {
         String answer = chatModel.generate(prompt);
 
         List<SourceReference> sources = relevantMatches.stream()
-                .map(m -> new SourceReference(m.embedded().text(), m.score()))
+                .map(m -> {
+                    String docId = m.embedded().metadata().get("docId");
+                    String docName = "";
+                    if (docId != null) {
+                        docName = documentRepository.findById(docId)
+                                .map(DocumentEntity::getName)
+                                .orElse("");
+                    }
+                    return new SourceReference(docId, docName, m.embedded().text(), m.score());
+                })
                 .collect(Collectors.toList());
 
         ChatHistoryEntity history = new ChatHistoryEntity(question, answer, "deepseek-chat");
@@ -102,14 +116,20 @@ public class ChatService {
     }
 
     public static class SourceReference {
+        private final String docId;
+        private final String docName;
         private final String content;
         private final double score;
 
-        public SourceReference(String content, double score) {
+        public SourceReference(String docId, String docName, String content, double score) {
+            this.docId = docId;
+            this.docName = docName;
             this.content = content;
             this.score = score;
         }
 
+        public String getDocId() { return docId; }
+        public String getDocName() { return docName; }
         public String getContent() { return content; }
         public double getScore() { return score; }
     }

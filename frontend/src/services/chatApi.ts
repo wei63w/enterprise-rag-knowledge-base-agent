@@ -5,6 +5,8 @@ export interface ChatRequest {
 
  
 export interface SourceReference {
+  docId: string;
+  docName: string;
   content: string;
   score: number;
 }

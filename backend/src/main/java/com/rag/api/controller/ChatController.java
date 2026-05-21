@@ -26,7 +26,7 @@ public class ChatController {
         ChatResponse response = new ChatResponse();
         response.setAnswer(result.getAnswer());
         response.setSources(result.getSources().stream()
-                .map(s -> new SourceReference(s.getContent(), s.getScore()))
+                .map(s -> new SourceReference(s.getDocId(), s.getDocName(), s.getContent(), s.getScore()))
                 .collect(Collectors.toList()));
         return response;
     }

@@ -1,6 +1,9 @@
 package com.rag.api.controller;
 
+import com.rag.api.dto.ChunkResponse;
 import com.rag.api.dto.DocumentResponse;
+import com.rag.document.entity.ChunkEntity;
+import com.rag.document.repository.ChunkRepository;
 import com.rag.document.service.DocumentService;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +21,11 @@ import org.springframework.web.multipart.MultipartFile;
 public class DocumentController {
 
     private final DocumentService documentService;
+    private final ChunkRepository chunkRepository;
 
-    public DocumentController(DocumentService documentService) {
+    public DocumentController(DocumentService documentService, ChunkRepository chunkRepository) {
         this.documentService = documentService;
+        this.chunkRepository = chunkRepository;
     }
 
     @GetMapping
@@ -49,5 +54,12 @@ public class DocumentController {
     public ResponseEntity<Void> delete(@PathVariable String id) {
         documentService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/chunks")
+    public List<ChunkResponse> chunks(@PathVariable String id) {
+        return chunkRepository.findByDocIdOrderByChunkIndexAsc(id).stream()
+                .map(c -> new ChunkResponse(c.getId(), c.getDocId(), c.getChunkIndex(), c.getContent()))
+                .toList();
     }
 }

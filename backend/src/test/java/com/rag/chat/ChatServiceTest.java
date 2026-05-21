@@ -8,10 +8,12 @@ class ChatServiceTest {
 
     @Test
     void chatResultHoldsAnswerAndSources() {
-        ChatService.SourceReference source = new ChatService.SourceReference("content text", 0.85);
+        ChatService.SourceReference source = new ChatService.SourceReference("doc1", "policy.txt", "content text", 0.85);
         ChatService.ChatResult result = new ChatService.ChatResult("answer text", List.of(source));
         assertEquals("answer text", result.getAnswer());
         assertEquals(1, result.getSources().size());
+        assertEquals("doc1", result.getSources().get(0).getDocId());
+        assertEquals("policy.txt", result.getSources().get(0).getDocName());
         assertEquals("content text", result.getSources().get(0).getContent());
         assertEquals(0.85, result.getSources().get(0).getScore());
     }
@@ -24,8 +26,10 @@ class ChatServiceTest {
     }
 
     @Test
-    void sourceReferenceHoldsContentAndScore() {
-        ChatService.SourceReference source = new ChatService.SourceReference("chunk text", 0.72);
+    void sourceReferenceHoldsAllFields() {
+        ChatService.SourceReference source = new ChatService.SourceReference("doc2", "report.md", "chunk text", 0.72);
+        assertEquals("doc2", source.getDocId());
+        assertEquals("report.md", source.getDocName());
         assertEquals("chunk text", source.getContent());
         assertEquals(0.72, source.getScore());
     }
