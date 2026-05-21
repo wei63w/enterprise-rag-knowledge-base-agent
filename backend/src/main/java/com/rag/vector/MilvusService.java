@@ -9,7 +9,7 @@ import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
 import io.milvus.client.MilvusServiceClient;
 import io.milvus.param.ConnectParam;
-import io.milvus.param.collection.DeleteParam;
+import io.milvus.param.dml.DeleteParam;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.stream.Collectors;
