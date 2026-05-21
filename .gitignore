@@ -1,7 +1,9 @@
-# Local editor/workspace metadata
+# 本地编辑器和工作区元数据
+.obsidian/
 docs/.obsidian/
+backend/.idea/
 
-# Build outputs
+# 构建产物
 backend/target/
 frontend/dist/
 frontend/node_modules/
@@ -9,9 +11,9 @@ frontend/*.tsbuildinfo
 frontend/vite.config.d.ts
 frontend/vite.config.js
 
-# Local environment files
+# 本地环境文件
 .env
 *.local
 
-# Logs
+# 日志
 *.log
