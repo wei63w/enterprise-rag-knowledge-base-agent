@@ -7,6 +7,9 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
+import io.milvus.client.MilvusServiceClient;
+import io.milvus.param.ConnectParam;
+import io.milvus.param.collection.DeleteParam;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,6 +22,7 @@ public class MilvusService {
     private final MilvusProperties properties;
     private final EmbeddingProperties embeddingProperties;
     private EmbeddingStore<TextSegment> embeddingStore;
+    private MilvusServiceClient milvusClient;
 
     public MilvusService(MilvusProperties properties, EmbeddingProperties embeddingProperties) {
         this.properties = properties;
@@ -33,6 +37,11 @@ public class MilvusService {
                 .collectionName(properties.getCollection())
                 .dimension(properties.getDimension())
                 .build();
+        
+        milvusClient = new MilvusServiceClient(ConnectParam.newBuilder()
+                .withHost(properties.getHost())
+                .withPort(properties.getPort())
+                .build());
     }
 
     public void insert(List<String> docIds, List<String> contents, List<float[]> embeddings) {
@@ -48,5 +57,12 @@ public class MilvusService {
     public List<EmbeddingMatch<TextSegment>> search(float[] queryVector, int topK) {
         Embedding queryEmbedding = Embedding.from(queryVector);
         return embeddingStore.findRelevant(queryEmbedding, topK);
+    }
+
+    public void deleteByDocId(String docId) {
+        milvusClient.delete(DeleteParam.newBuilder()
+                .withCollectionName(properties.getCollection())
+                .withExpr(String.format("docId == \"%s\"", docId))
+                .build());
     }
 }
