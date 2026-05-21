@@ -31,12 +31,6 @@ class DocumentControllerTest {
     @MockBean
     private ChunkRepository chunkRepository;
 
-    @MockBean
-    private ChunkRepository chunkRepository;
-
-    @MockBean
-    private ChunkRepository chunkRepository;
-
     @Test
     void listsDocuments() throws Exception {
         DocumentEntity document = new DocumentEntity("policy.txt", "TXT", 11);

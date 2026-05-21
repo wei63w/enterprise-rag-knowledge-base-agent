@@ -190,12 +190,11 @@ function ChatPage() {
               <div className="message-content">{msg.content}</div>
               {msg.sources && msg.sources.length > 0 ? (
                 <div className="message-sources">
-                  <Text type="secondary">来源引用：</Text>
-                  {msg.sources.map((s, i) => (
-                    <div key={i} className="source-item">
+                  {msg.sources.map((s, sIdx) => (
+                    <div key={sIdx}>
                       <div className="source-header">
-                        <Tag color="blue">{s.docName || s.docId}</Tag>
-                        <Tag>相关性: {s.score.toFixed(2)}</Tag>
+                        <Text strong>{s.docName}</Text>
+                        <Tag color="blue">相关性: {(s.score * 100).toFixed(1)}%</Tag>
                       </div>
                       <div className="source-content">{s.content}</div>
                     </div>

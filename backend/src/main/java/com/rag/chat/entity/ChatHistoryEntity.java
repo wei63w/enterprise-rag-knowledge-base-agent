@@ -1,8 +1,7 @@
 package com.rag.chat.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.time.Instant;
 import java.util.UUID;
 
@@ -10,7 +9,9 @@ import java.util.UUID;
 @Table(name = "chat_history")
 public class ChatHistoryEntity {
 
-    @Column(length = 36)
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(length = 36, updatable = false, nullable = false)
     private String id = UUID.randomUUID().toString();
 
     @Column(nullable = false, columnDefinition = "TEXT")
