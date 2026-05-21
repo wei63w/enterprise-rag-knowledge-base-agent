@@ -32,7 +32,7 @@ class DocumentControllerTest {
     private ChunkRepository chunkRepository;
 
     @MockBean
-    private com.rag.document.repository.ChunkRepository chunkRepository;
+    private ChunkRepository chunkRepository;
 
     @MockBean
     private ChunkRepository chunkRepository;
