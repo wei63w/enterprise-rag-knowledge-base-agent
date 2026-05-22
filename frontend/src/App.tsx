@@ -24,7 +24,7 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { deleteDocument, listDocuments, uploadDocument, type DocumentRecord } from "./services/documentApi";
-import { sendChat, type SourceReference } from "./services/chatApi";
+import { sendChat, getChatHistory, type SourceReference } from "./services/chatApi";
 import "./styles.css";
 
 const { Header, Content, Sider } = Layout;
@@ -151,6 +151,27 @@ function ChatPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | undefined>(() => sessionStorage.getItem("rag-session-id") || undefined);
+
+  useEffect(() => {
+    if (sessionId) {
+      void loadHistory();
+    }
+  }, []);
+
+  async function loadHistory() {
+    if (!sessionId) return;
+    try {
+      const historyMessages = await getChatHistory(sessionId);
+      const displayMessages = historyMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+      setMessages(displayMessages);
+    } catch {
+      // 历史加载失败，使用空列表
+    }
+  }
 
   async function handleSend() {
     if (!input.trim()) return;
@@ -162,13 +183,24 @@ function ChatPage() {
     setError(null);
 
     try {
-      const response = await sendChat({ question });
+      const response = await sendChat({ question, sessionId });
+      if (!sessionId) {
+        setSessionId(response.sessionId);
+        sessionStorage.setItem("rag-session-id", response.sessionId);
+      }
       setMessages(prev => [...prev, { role: "assistant", content: response.answer, sources: response.sources }]);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "问答请求失败");
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleNewChat() {
+    setSessionId(undefined);
+    sessionStorage.removeItem("rag-session-id");
+    setMessages([]);
+    setError(null);
   }
 
   return (
@@ -178,7 +210,10 @@ function ChatPage() {
           <Title id="chat-title" level={2}>对话</Title>
           <Text type="secondary">RAG 问答工作区</Text>
         </div>
-        <Tag color="blue">基础问答</Tag>
+        <Space>
+          <Tag color="blue">多轮记忆</Tag>
+          <Button icon={<ReloadOutlined />} onClick={handleNewChat}>新对话</Button>
+        </Space>
       </div>
       {error ? <Alert className="panel-alert" message={error} showIcon type="error" /> : null}
       <div className="chat-surface">
@@ -286,7 +321,7 @@ function App() {
         <Layout>
           <Header className="app-header">
             <Title level={1}>Enterprise RAG Knowledge Base Agent</Title>
-            <Text type="secondary">Phase 4 Source Tracing</Text>
+            <Text type="secondary">Phase 6a Session Memory</Text>
           </Header>
           <Content className="app-content">{content}</Content>
         </Layout>
