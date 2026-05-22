@@ -7,7 +7,10 @@ import com.rag.config.RagProperties;
 import com.rag.document.entity.DocumentEntity;
 import com.rag.document.repository.DocumentRepository;
 import com.rag.embedding.EmbeddingService;
+import com.rag.retrieval.BM25KeywordService;
 import com.rag.vector.MilvusService;
+import dev.langchain4j.data.document.Metadata;
+import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
@@ -16,7 +19,10 @@ import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +41,7 @@ public class ChatService {
     private final ChatLanguageModel chatModel;
     private final RagProperties ragProperties;
     private final RedisChatMemoryStore chatMemoryStore;
+    private final BM25KeywordService bm25Service;
 
     public ChatService(
             EmbeddingService embeddingService,
@@ -46,13 +53,15 @@ public class ChatService {
             @Value("${chat.model}") String modelName,
             @Value("${chat.temperature}") Double temperature,
             RagProperties ragProperties,
-            RedisChatMemoryStore chatMemoryStore) {
+            RedisChatMemoryStore chatMemoryStore,
+            BM25KeywordService bm25Service) {
         this.embeddingService = embeddingService;
         this.milvusService = milvusService;
         this.chatHistoryRepository = chatHistoryRepository;
         this.documentRepository = documentRepository;
         this.ragProperties = ragProperties;
         this.chatMemoryStore = chatMemoryStore;
+        this.bm25Service = bm25Service;
         this.chatModel = OpenAiChatModel.builder()
                 .apiKey(apiKey)
                 .baseUrl(baseUrl)
@@ -78,10 +87,16 @@ public class ChatService {
             String searchQuestion = rewriteQuestion(history, question);
 
             float[] queryVector = embeddingService.embed(searchQuestion);
-            List<EmbeddingMatch<TextSegment>> matches = milvusService.search(
-                    queryVector, ragProperties.getRetrieval().getVectorTopK());
+            List<EmbeddingMatch<TextSegment>> vectorMatches = milvusService.search(
+                    queryVector, ragProperties.getRetrieval().getVectorTopK() * 2);
 
-            List<EmbeddingMatch<TextSegment>> relevantMatches = matches.stream()
+            List<BM25KeywordService.KeywordHit> bm25Hits = bm25Service.search(
+                    searchQuestion, ragProperties.getRetrieval().getBm25TopK() * 2);
+
+            List<EmbeddingMatch<TextSegment>> merged = mergeResults(
+                    vectorMatches, bm25Hits, ragProperties.getRetrieval().getRrfTopK());
+
+            List<EmbeddingMatch<TextSegment>> relevantMatches = merged.stream()
                     .filter(m -> m.score() >= MIN_SCORE_THRESHOLD)
                     .collect(Collectors.toList());
 
@@ -121,6 +136,41 @@ public class ChatService {
         } catch (RuntimeException e) {
             throw new IllegalStateException("对话服务暂时不可用，请稍后重试");
         }
+    }
+
+    private List<EmbeddingMatch<TextSegment>> mergeResults(
+            List<EmbeddingMatch<TextSegment>> vectorMatches,
+            List<BM25KeywordService.KeywordHit> bm25Hits,
+            int topK) {
+
+        Map<String, EmbeddingMatch<TextSegment>> dedup = new LinkedHashMap<>();
+        double k = 60.0;
+
+        for (int i = 0; i < vectorMatches.size(); i++) {
+            EmbeddingMatch<TextSegment> m = vectorMatches.get(i);
+            String docId = m.embedded().metadata().get("docId");
+            String key = docId + ":" + m.embedded().text();
+            double rrf = 1.0 / (k + i + 1);
+            dedup.put(key, new EmbeddingMatch<>(rrf, key, m.embedding(), m.embedded()));
+        }
+
+        for (int i = 0; i < bm25Hits.size(); i++) {
+            BM25KeywordService.KeywordHit hit = bm25Hits.get(i);
+            String key = hit.docId() + ":" + hit.content();
+            if (!dedup.containsKey(key)) {
+                double rrf = 1.0 / (k + i + 1);
+                TextSegment segment = TextSegment.from(hit.content(), Metadata.from("docId", hit.docId()));
+                Embedding fake = Embedding.from(new float[0]);
+                dedup.put(key, new EmbeddingMatch<>(rrf, key, fake, segment));
+            }
+        }
+
+        List<EmbeddingMatch<TextSegment>> result = new ArrayList<>(dedup.values());
+        result.sort((a, b) -> Double.compare(b.score(), a.score()));
+        if (result.size() > topK) {
+            return result.subList(0, topK);
+        }
+        return result;
     }
 
     private String rewriteQuestion(List<ChatMessage> history, String question) {
