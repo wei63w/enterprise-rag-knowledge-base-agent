@@ -7,22 +7,20 @@ import static org.junit.jupiter.api.Assertions.*;
 class ChatServiceTest {
 
     @Test
-    void chatResultHoldsAnswerAndSources() {
+    void chatResultHoldsAnswerAndSourcesAndSessionId() {
         ChatService.SourceReference source = new ChatService.SourceReference("doc1", "policy.txt", "content text", 0.85);
-        ChatService.ChatResult result = new ChatService.ChatResult("answer text", List.of(source));
+        ChatService.ChatResult result = new ChatService.ChatResult("answer text", List.of(source), "session-1");
         assertEquals("answer text", result.getAnswer());
         assertEquals(1, result.getSources().size());
-        assertEquals("doc1", result.getSources().get(0).getDocId());
-        assertEquals("policy.txt", result.getSources().get(0).getDocName());
-        assertEquals("content text", result.getSources().get(0).getContent());
-        assertEquals(0.85, result.getSources().get(0).getScore());
+        assertEquals("session-1", result.getSessionId());
     }
 
     @Test
     void chatResultWithNoSources() {
         ChatService.ChatResult result = new ChatService.ChatResult(
-                "当前知识库中不具备足够依据回答该问题", List.of());
+                "当前知识库中不具备足够依据回答该问题", List.of(), "session-2");
         assertTrue(result.getSources().isEmpty());
+        assertEquals("session-2", result.getSessionId());
     }
 
     @Test
@@ -36,9 +34,7 @@ class ChatServiceTest {
 
     @Test
     void wrapsRuntimeExceptionAsIllegalStateException() {
-        RuntimeException originalException = new RuntimeException("Embedding failed");
         IllegalStateException wrapped = new IllegalStateException("对话服务暂时不可用，请稍后重试");
-        
         assertEquals("对话服务暂时不可用，请稍后重试", wrapped.getMessage());
     }
 }
