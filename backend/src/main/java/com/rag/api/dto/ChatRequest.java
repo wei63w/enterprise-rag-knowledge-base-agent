@@ -5,6 +5,7 @@ import java.util.List;
 public class ChatRequest {
     private String question;
     private List<String> docIds;
+    private String sessionId;
 
     public String getQuestion() {
         return question;
@@ -20,5 +21,13 @@ public class ChatRequest {
 
     public void setDocIds(List<String> docIds) {
         this.docIds = docIds;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
     }
 }

@@ -5,6 +5,7 @@ import java.util.List;
 public class ChatResponse {
     private String answer;
     private List<SourceReference> sources;
+    private String sessionId;
 
     public String getAnswer() {
         return answer;
@@ -20,5 +21,13 @@ public class ChatResponse {
 
     public void setSources(List<SourceReference> sources) {
         this.sources = sources;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
     }
 }
