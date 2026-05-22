@@ -18,13 +18,24 @@ body {
 }
 
 .app-sider {
-  background: #17212f !important;
-  border-right: 1px solid #263244;
+  --sider-bg: #10201d;
+  --sider-border: #24403a;
+  --sider-text: #c8d8d3;
+  --sider-muted: #88a39b;
+  --sider-hover: #18342f;
+  --sider-selected-bg: #bcebd8;
+  --sider-selected-text: #0d211d;
+  --sider-accent: #f1c75b;
+
+  background:
+    linear-gradient(180deg, rgba(188, 235, 216, 0.08), rgba(16, 32, 29, 0) 42%),
+    var(--sider-bg) !important;
+  border-right: 1px solid var(--sider-border);
 }
 
 .app-sider .ant-menu {
   background: transparent;
-  color: #c5d0df;
+  color: var(--sider-text);
   border-inline-end: 0;
   padding: 8px;
 }
@@ -33,11 +44,23 @@ body {
   border-radius: 6px;
   height: 42px;
   line-height: 42px;
+  color: var(--sider-text);
+}
+
+.app-sider .ant-menu-item:hover,
+.app-sider .ant-menu-item-active {
+  background: var(--sider-hover) !important;
+  color: #ffffff !important;
 }
 
 .app-sider .ant-menu-item-selected {
-  background: #2364aa;
-  color: #ffffff;
+  background: var(--sider-selected-bg) !important;
+  color: var(--sider-selected-text) !important;
+  font-weight: 700;
+}
+
+.app-sider .ant-menu-item-selected .anticon {
+  color: var(--sider-selected-text);
 }
 
 .brand-mark {
@@ -49,14 +72,15 @@ body {
   color: #ffffff;
   font-size: 16px;
   font-weight: 700;
+  border-bottom: 1px solid rgba(188, 235, 216, 0.12);
 }
 
 .brand-dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #39c5bb;
-  box-shadow: 0 0 0 4px rgba(57, 197, 187, 0.16);
+  background: var(--sider-accent);
+  box-shadow: 0 0 0 4px rgba(241, 199, 91, 0.16);
 }
 
 .app-header {
