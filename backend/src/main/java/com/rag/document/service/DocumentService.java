@@ -10,6 +10,7 @@ import com.rag.document.repository.DocumentRepository;
 import com.rag.document.storage.StorageService;
 import com.rag.document.storage.StorageService.StoredObject;
 import com.rag.embedding.EmbeddingService;
+import com.rag.retrieval.BM25KeywordService;
 import com.rag.vector.MilvusService;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
@@ -30,6 +31,7 @@ public class DocumentService {
     private final FixedLengthChunker chunker;
     private final EmbeddingService embeddingService;
     private final MilvusService milvusService;
+    private final BM25KeywordService bm25Service;
 
     public DocumentService(
             DocumentRepository documentRepository,
@@ -38,7 +40,8 @@ public class DocumentService {
             DocumentTextParser parser,
             FixedLengthChunker chunker,
             EmbeddingService embeddingService,
-            MilvusService milvusService) {
+            MilvusService milvusService,
+            BM25KeywordService bm25Service) {
         this.documentRepository = documentRepository;
         this.chunkRepository = chunkRepository;
         this.storageService = storageService;
@@ -46,6 +49,7 @@ public class DocumentService {
         this.chunker = chunker;
         this.embeddingService = embeddingService;
         this.milvusService = milvusService;
+        this.bm25Service = bm25Service;
     }
 
     @Transactional
@@ -74,6 +78,7 @@ public class DocumentService {
             List<String> docIds = chunks.stream().map(c -> c.getDocId()).toList();
             List<float[]> embeddings = embeddingService.embed(contents);
             milvusService.insert(docIds, contents, embeddings);
+            bm25Service.indexChunks(document.getId(), contents);
             return document;
         } catch (IOException e) {
             document.markError("文件读取失败");
@@ -107,6 +112,7 @@ public class DocumentService {
         
         try {
             milvusService.deleteByDocId(id);
+            bm25Service.deleteByDocId(id);
             
             if (document.getFilePath() != null && !document.getFilePath().isEmpty()) {
                 storageService.delete(document.getFilePath());

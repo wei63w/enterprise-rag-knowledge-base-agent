@@ -15,6 +15,7 @@ import com.rag.document.repository.ChunkRepository;
 import com.rag.document.repository.DocumentRepository;
 import com.rag.document.storage.StorageService;
 import com.rag.embedding.EmbeddingService;
+import com.rag.retrieval.BM25KeywordService;
 import com.rag.vector.MilvusService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,8 @@ class DocumentServiceTest {
         EmbeddingService embeddingService = org.mockito.Mockito.mock(EmbeddingService.class);
         MilvusService milvusService = org.mockito.Mockito.mock(MilvusService.class);
         FixedLengthChunker chunker = new FixedLengthChunker(5, 0);
-        DocumentService service = new DocumentService(documentRepository, chunkRepository, storageService, parser, chunker, embeddingService, milvusService);
+        BM25KeywordService bm25Service = org.mockito.Mockito.mock(BM25KeywordService.class);
+        DocumentService service = new DocumentService(documentRepository, chunkRepository, storageService, parser, chunker, embeddingService, milvusService, bm25Service);
         MockMultipartFile file = new MockMultipartFile(
                 "file",
                 "policy.txt",
@@ -68,7 +70,8 @@ class DocumentServiceTest {
         EmbeddingService embeddingService = org.mockito.Mockito.mock(EmbeddingService.class);
         MilvusService milvusService = org.mockito.Mockito.mock(MilvusService.class);
         FixedLengthChunker chunker = new FixedLengthChunker(5, 0);
-        DocumentService service = new DocumentService(documentRepository, chunkRepository, storageService, parser, chunker, embeddingService, milvusService);
+        BM25KeywordService bm25Service = org.mockito.Mockito.mock(BM25KeywordService.class);
+        DocumentService service = new DocumentService(documentRepository, chunkRepository, storageService, parser, chunker, embeddingService, milvusService, bm25Service);
         
         when(documentRepository.findById("nonexistent")).thenReturn(java.util.Optional.empty());
         
@@ -84,7 +87,8 @@ class DocumentServiceTest {
         EmbeddingService embeddingService = org.mockito.Mockito.mock(EmbeddingService.class);
         MilvusService milvusService = org.mockito.Mockito.mock(MilvusService.class);
         FixedLengthChunker chunker = new FixedLengthChunker(5, 0);
-        DocumentService service = new DocumentService(documentRepository, chunkRepository, storageService, parser, chunker, embeddingService, milvusService);
+        BM25KeywordService bm25Service = org.mockito.Mockito.mock(BM25KeywordService.class);
+        DocumentService service = new DocumentService(documentRepository, chunkRepository, storageService, parser, chunker, embeddingService, milvusService, bm25Service);
         
         DocumentEntity document = new DocumentEntity("test.txt", "TXT", 100);
         document.markDeleting();
@@ -102,7 +106,8 @@ class DocumentServiceTest {
         EmbeddingService embeddingService = org.mockito.Mockito.mock(EmbeddingService.class);
         MilvusService milvusService = org.mockito.Mockito.mock(MilvusService.class);
         FixedLengthChunker chunker = new FixedLengthChunker(5, 0);
-        DocumentService service = new DocumentService(documentRepository, chunkRepository, storageService, parser, chunker, embeddingService, milvusService);
+        BM25KeywordService bm25Service = org.mockito.Mockito.mock(BM25KeywordService.class);
+        DocumentService service = new DocumentService(documentRepository, chunkRepository, storageService, parser, chunker, embeddingService, milvusService, bm25Service);
         
         DocumentEntity document = new DocumentEntity("test.txt", "TXT", 100);
         document.markStored("documents/test.txt");
