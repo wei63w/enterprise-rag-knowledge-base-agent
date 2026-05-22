@@ -65,6 +65,8 @@ public class RagProperties {
 
     public static class Retrieval {
         private int vectorTopK = 8;
+        private int bm25TopK = 8;
+        private int rrfTopK = 8;
 
         public int getVectorTopK() {
             return vectorTopK;
@@ -72,6 +74,22 @@ public class RagProperties {
 
         public void setVectorTopK(int vectorTopK) {
             this.vectorTopK = vectorTopK;
+        }
+
+        public int getBm25TopK() {
+            return bm25TopK;
+        }
+
+        public void setBm25TopK(int bm25TopK) {
+            this.bm25TopK = bm25TopK;
+        }
+
+        public int getRrfTopK() {
+            return rrfTopK;
+        }
+
+        public void setRrfTopK(int rrfTopK) {
+            this.rrfTopK = rrfTopK;
         }
     }
 

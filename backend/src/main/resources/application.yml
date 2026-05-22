@@ -45,6 +45,8 @@ rag:
     overlap: 100
   retrieval:
     vector-top-k: 8
+    bm25-top-k: 8
+    rrf-top-k: 8
   memory:
     window-size: 5
     session-ttl-seconds: 3600
